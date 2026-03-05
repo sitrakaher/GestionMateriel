@@ -1,0 +1,54 @@
+// api/api.js
+const API_URL = "http://localhost:5000/materiels"; // adapte selon ton backend
+
+export const getMateriels = async () => {
+  try {
+    const response = await fetch(API_URL);
+    if (!response.ok) throw new Error("Erreur lors de la récupération des matériels");
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+};
+
+export const addMateriel = async (materiel) => {
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(materiel),
+    });
+    if (!response.ok) throw new Error("Erreur lors de l'ajout du matériel");
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+export const updateMateriel = async (id, materiel) => {
+  try {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(materiel),
+    });
+    if (!response.ok) throw new Error("Erreur lors de la modification du matériel");
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+export const deleteMateriel = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+    if (!response.ok) throw new Error("Erreur lors de la suppression du matériel");
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
