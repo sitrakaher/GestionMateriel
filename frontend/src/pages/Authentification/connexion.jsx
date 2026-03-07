@@ -135,7 +135,7 @@ export default function Connexion() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-2 border rounded-lg bg-white"
-                placeholder="••••••••"
+                placeholder="******"
                 required
               />
             </div>
