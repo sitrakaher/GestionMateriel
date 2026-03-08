@@ -189,11 +189,11 @@ export async function getDemandes(service = null) {
   }
 }
 
-export async function createDemande(demandeur_id, service, lignes) {
+export async function createDemande(demandeur_id, service_id, lignes) {
   try {
     const res = await api.post("/demandes/", { 
       demandeur_id, 
-      service,  // Changé de service_id à service
+      service_id,  // Changé de service_id à service
       lignes 
     });
     return res.data;

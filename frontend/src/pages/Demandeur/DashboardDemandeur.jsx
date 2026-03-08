@@ -106,12 +106,12 @@ export default function DashboardDemandeur() {
       setDemandeEnEdition(null);
       showToast("✅ Demande modifiée avec succès !");
     } else {
-      await createDemande(user.id, service, lignes);
+      await createDemande(user.id, user.service_id, lignes);
       showToast("📨 Demande envoyée au chef de service !");
     }
 
     setQuantite(1);
-    fetchDemandes();
+    await fetchDemandes();
   };
 
   // 🔹 Menu contextuel
@@ -179,7 +179,9 @@ export default function DashboardDemandeur() {
     <div>
       <NavBar titre="Tableau de Bord Demandeur"/>
     <div className="p-6 relative">
+
       {/* Formulaire demande */}
+
       <div className="mb-4 flex gap-2">
         <select
           value={natureSelectionnee}
