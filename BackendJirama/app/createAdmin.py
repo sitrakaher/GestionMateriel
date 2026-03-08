@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from database import get_db
-from models import User, RoleEnum
+from BackendJirama.app.models import User, RoleEnum
 from lib.security import hash_password
 
 load_dotenv()

@@ -7,7 +7,6 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// 🔹 Gestion du token
 export function setToken(token) {
   if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   else delete api.defaults.headers.common["Authorization"];
@@ -21,15 +20,9 @@ export async function login(email, password, role, service) {
   } catch (err) {
     const errorDetail = err.response?.data?.detail;
     let errorMessage = "Erreur lors de la connexion";
-    
-    if (Array.isArray(errorDetail)) {
-      errorMessage = errorDetail.map(e => e.msg).join(', ');
-    } else if (typeof errorDetail === 'string') {
-      errorMessage = errorDetail;
-    } else if (errorDetail && typeof errorDetail === 'object') {
-      errorMessage = errorDetail.msg || JSON.stringify(errorDetail);
-    }
-    
+    if (Array.isArray(errorDetail)) errorMessage = errorDetail.map((e) => e.msg).join(", ");
+    else if (typeof errorDetail === "string") errorMessage = errorDetail;
+    else if (errorDetail && typeof errorDetail === "object") errorMessage = errorDetail.msg || JSON.stringify(errorDetail);
     return { error: errorMessage };
   }
 }
@@ -143,7 +136,7 @@ export const getMateriels = async () => {
     return res.data;
   } catch (err) {
     console.error("Erreur récupération matériels:", err);
-    return { error: err.response?.data?.detail || "Erreur lors de la récupération des matériels" };
+    return [];
   }
 };
 
@@ -153,7 +146,7 @@ export const addMateriel = async (materiel) => {
     return res.data;
   } catch (err) {
     console.error("Erreur ajout matériel:", err);
-    return { error: err.response?.data?.detail || "Erreur lors de l'ajout du matériel" };
+    return null;
   }
 };
 
@@ -163,7 +156,7 @@ export const updateMateriel = async (id, materiel) => {
     return res.data;
   } catch (err) {
     console.error("Erreur modification matériel:", err);
-    return { error: err.response?.data?.detail || "Erreur lors de la modification du matériel" };
+    return null;
   }
 };
 
@@ -173,29 +166,25 @@ export const deleteMateriel = async (id) => {
     return res.data || true;
   } catch (err) {
     console.error("Erreur suppression matériel:", err);
-    return { error: err.response?.data?.detail || "Erreur lors de la suppression du matériel" };
+    return false;
   }
 };
 
 // ---------- Demandes ----------
 export async function getDemandes(service = null) {
   try {
-    const url = service ? `/demandes?service=${service}` : "/demandes";
+    const url = service ? `/demandes?service=${encodeURIComponent(service)}` : "/demandes";
     const res = await api.get(url);
     return res.data;
   } catch (err) {
     console.error("Erreur récupération demandes:", err);
-    return { error: err.response?.data?.detail || "Erreur lors de la récupération des demandes" };
+    return [];
   }
 }
 
 export async function createDemande(demandeur_id, service_id, lignes) {
   try {
-    const res = await api.post("/demandes/", { 
-      demandeur_id, 
-      service_id,  // Changé de service_id à service
-      lignes 
-    });
+    const res = await api.post("/demandes/", { demandeur_id, service_id, lignes });
     return res.data;
   } catch (err) {
     console.error("Erreur création demande:", err);
@@ -203,9 +192,12 @@ export async function createDemande(demandeur_id, service_id, lignes) {
   }
 }
 
-export async function updateDemandeStatus(demandeId, status) {
+// ✅ FIX : updateDemandeStatus accepte maintenant un motif_rejet optionnel
+export async function updateDemandeStatus(demandeId, status, motifRejet = null) {
   try {
-    const res = await api.put(`/demandes/${demandeId}/status`, { status });
+    const payload = { status };
+    if (motifRejet) payload.motif_rejet = motifRejet;
+    const res = await api.put(`/demandes/${demandeId}/status`, payload);
     return res.data;
   } catch (err) {
     console.error("Erreur mise à jour statut demande:", err);
@@ -224,9 +216,10 @@ export async function updateDemande(demandeId, payload) {
 }
 
 // ---------- Livraisons ----------
+// ✅ FIX : types acceptés → "complet" | "partiel" | "epuise"
 export async function updateLivraison(demandeId, type, quantite = null) {
   try {
-    const payload = type === "partiel" ? { status: type, quantite } : { status: type };
+    const payload = quantite !== null ? { status: type, quantite } : { status: type };
     const res = await api.put(`/demandes/${demandeId}/livraison`, payload);
     return res.data;
   } catch (err) {
@@ -242,16 +235,13 @@ export async function getNotifications() {
     return res.data;
   } catch (err) {
     console.error("Erreur récupération notifications:", err);
-    return { error: err.response?.data?.detail || "Erreur lors de la récupération des notifications" };
+    return [];
   }
 }
 
 export async function addNotification(userId, message) {
   try {
-    const res = await api.post("/notifications/", {
-      user_id: userId,
-      message,
-    });
+    const res = await api.post("/notifications/", { user_id: userId, message });
     return res.data;
   } catch (err) {
     console.error("Erreur API addNotification:", err);

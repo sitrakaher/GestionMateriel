@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from .models import RoleEnum, StatusDemande
@@ -19,9 +19,20 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     role: RoleEnum
+    service_id: Optional[int] = None
     service: Optional[str] = None
     created_at: Optional[datetime] = None
     is_active: Optional[bool] = None
+
+    # ✅ FIX : si service est un objet SQLAlchemy Service, extraire .nom
+    @field_validator("service", mode="before")
+    @classmethod
+    def extraire_nom_service(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            return v
+        return getattr(v, "nom", None)
 
     class Config:
         from_attributes = True
@@ -82,7 +93,6 @@ class LigneDemandeCreate(BaseModel):
     nature: Optional[str] = None
     quantite: int
 
-
     class Config:
         from_attributes = True
 
@@ -123,11 +133,6 @@ class DemandeOut(BaseModel):
     service: Optional[ServiceOut] = None
     lignes: List[LigneDemandeOut] = []
 
-    # 🔹 champ calculé (utile pour Dashboard)
-    @property
-    def total_articles(self) -> int:
-        return sum(l.quantite for l in self.lignes)
-
     class Config:
         from_attributes = True
 
@@ -144,7 +149,7 @@ class DemandeUpdate(BaseModel):
 
 # ------------- Livraison -------------
 class LivraisonUpdate(BaseModel):
-    status: str  # "complet" | "partiel"
+    status: str  # "complet" | "partiel" | "epuise"
     quantite: Optional[int] = None
 
 

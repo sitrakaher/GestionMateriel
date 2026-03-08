@@ -1,42 +1,59 @@
 // notificationContext.jsx
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useCallback, useRef } from "react";
 import { getNotifications, markNotificationRead } from "../api/api";
 import { useAuth } from "./authContext";
 
 const NotificationContext = createContext();
 
-// 🔹 Provider
 export function NotificationProvider({ children }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
+  const intervalRef = useRef(null); // ✅ référence stable à l'interval
 
-  // 🔹 Récupérer notifications depuis backend
-  const fetchNotifications = async () => {
-    if (!user) return;
+  const fetchNotifications = useCallback(async () => {
+    if (!user?.id) return; // ✅ stopper si pas d'utilisateur connecté
     try {
       const data = await getNotifications(user.id);
-      setNotifications(data);
+      if (Array.isArray(data)) setNotifications(data);
     } catch (err) {
-      console.error("Erreur lors de la récupération des notifications :", err);
+      console.error("Erreur notifications :", err);
     }
-  };
+  }, [user?.id]);
 
-  // 🔹 Marquer notification comme lue
   const readNotification = async (notifId) => {
     try {
       await markNotificationRead(notifId);
       fetchNotifications();
     } catch (err) {
-      console.error("Erreur lors de la lecture de la notification :", err);
+      console.error("Erreur lecture notification :", err);
     }
   };
 
-  // 🔹 Refresh automatique toutes les 5 secondes
   useEffect(() => {
-    if (user) fetchNotifications();
-    const interval = setInterval(fetchNotifications, 5000);
-    return () => clearInterval(interval);
-  }, [user]);
+    // ✅ Si pas d'utilisateur : vider les notifications et stopper l'interval
+    if (!user?.id) {
+      setNotifications([]);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
+    // ✅ Fetch immédiat à la connexion
+    fetchNotifications();
+
+    // ✅ Démarrer l'interval seulement si user connecté
+    intervalRef.current = setInterval(fetchNotifications, 5000);
+
+    // ✅ Cleanup à la déconnexion ou changement d'utilisateur
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [user?.id, fetchNotifications]); // ✅ re-exécuté uniquement si l'ID change
 
   return (
     <NotificationContext.Provider value={{ notifications, readNotification, fetchNotifications }}>
@@ -45,13 +62,10 @@ export function NotificationProvider({ children }) {
   );
 }
 
-// 🔹 Hook pour consommer le context
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error(
-      "useNotifications doit être utilisé à l'intérieur d'un NotificationProvider"
-    );
+    throw new Error("useNotifications doit être utilisé à l'intérieur d'un NotificationProvider");
   }
   return context;
 };

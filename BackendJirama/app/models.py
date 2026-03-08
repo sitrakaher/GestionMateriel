@@ -20,6 +20,7 @@ class StatusDemande(str, enum.Enum):
     LIVREE = "livree"
     LIVREE_PARTIEL = "livree_partiel"
     EPUISE = "epuise"
+    ANNULEE = "annulee"          # ✅ AJOUTÉ
 
 class Service(Base):
     __tablename__ = "services"
@@ -49,7 +50,7 @@ class Materiel(Base):
     id = Column(Integer, primary_key=True, index=True)
     numero_article = Column(String(50), unique=True, index=True, nullable=False)
     nom = Column(String(100), nullable=False)
-    nature = Column(String(100), nullable=False)  # utilisé pour le préfixe
+    nature = Column(String(100), nullable=False)
     prix = Column(Float, nullable=False)
     quantite = Column(Integer, default=0)
     service_id = Column(Integer, ForeignKey("services.id"), nullable=True)
